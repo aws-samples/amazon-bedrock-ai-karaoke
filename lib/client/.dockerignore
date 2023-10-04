@@ -1,0 +1,4 @@
+# Ignored by docker
+node_modules
+build
+.gitignore
