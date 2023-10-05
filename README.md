@@ -1,4 +1,8 @@
 # Amazon Bedrock AI Karaoke
+[![Release Notes](https://img.shields.io/github/v/release/aws-samples/amazon-bedrock-ai-karaoke)](https://github.com/aws-samples/amazon-bedrock-ai-karaoke/releases)
+[![GitHub star chart](https://img.shields.io/github/stars/aws-samples/amazon-bedrock-ai-karaoke?style=social)](https://star-history.com/#aws-samples/amazon-bedrock-ai-karaoke)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 <img src="lib/client/public/logo.png" alt="AI Karaoke Setup" width="400"/>
 
@@ -51,7 +55,9 @@ The key AWS services used in this architecture are:
 
 1. Get the code 
 
-	```git clone https://github.com/aws-samples/amazon-bedrock-ai-karaoke```
+	```bash
+	git clone https://github.com/aws-samples/amazon-bedrock-ai-karaoke
+	```
 
 2. Ensure you have AWS credentials configured
 3. To interact with models from Amazon Bedrock, you need to [request access to the base models in one of the regions where Amazon Bedrock is available](https://console.aws.amazon.com/bedrock/home?#/modelaccess). Make sure to read and accept models end-user license agreements or EULA.
@@ -65,28 +71,34 @@ To get started with this project, it's recommended to first try it out locally o
 Firstly, we will install and run the front-end website locally:
 
 1. Move to the website src directory 
-
-	```cd ./lib/client/```
+	```bash
+	cd ./lib/client/
+	```
 2. Install the npm dependencies 
-	
-	```npm install```
+	```bash
+	npm install
+	```
 3. Run the website 
-		
-	```npm start```
+	```bash
+	npm start
+	```
 4. Open a browser and go to http://localhost:3000
 
 
 Now, in another terminal - we will started the server application
 
 1. Move to the server src directory: 
-	
-	```cd ./lib/server/```
-2. Install the python dependencies: (note the RPi.GPIO install will fail on your laptop but this is expected) 
-
-	```pip install -r requirements.txt```
+	```bash
+	cd ./lib/server/
+	```
+2. Install the python dependencies: (note the RPi.GPIO install will fail on your laptop but this is expected)
+	```bash
+	pip install -r requirements.txt
+	```
 3. Run the server: 
-	
-	```python3 server.py```
+	```bash
+	python3 server.py
+	```
 
 # Deploy to Pi
 
@@ -107,14 +119,18 @@ Now it's time to configure the infrastructure to deploy the software to the Rasp
 
 1. Get the code 
 	
-	```git clone https://github.com/aws-samples/amazon-bedrock-ai-karaoke```
+	```bash
+	git clone https://github.com/aws-samples/amazon-bedrock-ai-karaoke
+	```
 
 2. Your AWS account and Region must be [bootstrapped]("https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html") to create these resources before you can deploy. If you haven't already bootstrapped, issue the following command: 
-
-	```cdk bootstrap aws://ACCOUNT-NUMBER/REGION```
-3. Deploy the cdk app 
-
-	```cdk deploy```
+	```bash
+	cdk bootstrap aws://ACCOUNT-NUMBER/REGION
+	```
+3. Deploy the cdk app
+	```bash
+	cdk deploy
+	```
 4. When the deployment is paused on the ECS Service creation, login to the AWS Console to get the registration command: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-anywhere-registration.html
 5. SSH onto the raspberry pi and paste the registration command
 6. The deployment should now complete and the service should be running on the pi
@@ -232,9 +248,11 @@ sudo vim  /etc/rc.local
 rm /var/lib/ecs/data/ecs_agent_data.json
 
 # Second WiFi on Pi
-```
+```bash
 sudo vim /etc/wpa_supplicant/wpa_supplicant.conf 
+```
 
+```
 network={
 	ssid=""
 	psk=""
