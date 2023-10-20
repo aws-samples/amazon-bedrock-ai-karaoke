@@ -62,8 +62,12 @@ The key AWS services used in this architecture are:
 2. Ensure you have AWS credentials configured
 3. To interact with models from Amazon Bedrock, you need to [request access to the base models in one of the regions where Amazon Bedrock is available](https://console.aws.amazon.com/bedrock/home?#/modelaccess). Make sure to read and accept models end-user license agreements or EULA.
 
-![sample](assets/enable-models.gif "AWS GenAI Chatbot")
-
+![sample](assets/enable-models.gif "Amazon Bedrock")
+4. Your AWS account and Region must be [bootstrapped]("https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html") to create these resources before you can deploy. If you haven't already bootstrapped, issue the following command: 
+	```bash
+	cdk bootstrap aws://ACCOUNT-NUMBER/REGION
+	```
+5. Make sure you have Docker installed and running on your machine as this will be used to build the container images used for the ECS tasks.
 
 # Local Dev
 To get started with this project, it's recommended to first try it out locally on your laptop.
@@ -115,29 +119,19 @@ First, complete the following pre-requisites:
 1. Install the Raspberry Pi OS (64 Bit) with GUI using [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to your Raspberry Pi and setup SSH keys and internet.
 2. Power up and SSH to the pi
 
-Now it's time to configure the infrastructure to deploy the software to the Raspberry Pi:
+Now it's time to configure the infrastructure to deploy the software to the Raspberry Pi. Mkae sure you've completed the prerequisites above.
 
-1. Get the code 
-	
-	```bash
-	git clone https://github.com/aws-samples/amazon-bedrock-ai-karaoke
-	```
-
-2. Your AWS account and Region must be [bootstrapped]("https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html") to create these resources before you can deploy. If you haven't already bootstrapped, issue the following command: 
-	```bash
-	cdk bootstrap aws://ACCOUNT-NUMBER/REGION
-	```
-3. Deploy the cdk app
+1. Deploy the cdk app
 	```bash
 	cdk deploy
 	```
-4. When the deployment is paused on the ECS Service creation, login to the AWS Console to get the registration command: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-anywhere-registration.html
-5. SSH onto the raspberry pi and paste the registration command
-6. The deployment should now complete and the service should be running on the pi
-7. Setup the kiosk service. You can find the `kiosk.sh` and `kiosk.service` files in the top level `scripts` directory.
+2. When the deployment is paused on the ECS Service creation, login to the AWS Console to get the registration command: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-anywhere-registration.html
+3. SSH onto the raspberry pi and paste the registration command
+4. The deployment should now complete and the service should be running on the pi
+5. Setup the kiosk service. You can find the `kiosk.sh` and `kiosk.service` files in the top level `scripts` directory.
 
 	```
-	sudo apt install xdotool unclutter
+	sudo apt install -y xdotool unclutter fonts-noto-color-emoji
 	sudo raspi-config > 1 System Options > S5 Boot / Auto Login >B4 Desktop Autologin — Desktop GUI, automatically logged in as ‘pi’ user
 	```
 	Create the following files and enable the kiosk service
@@ -148,7 +142,7 @@ Now it's time to configure the infrastructure to deploy the software to the Rasp
 	sudo systemctl start kiosk.service
 	```
 
-8. Either build the full hardware box following the [Build Instructions](#build-instructions) or use the minimal pi setup and use a USB mouse instead of the buttons to select the best response:
+6. Either build the full hardware box following the [Build Instructions](#build-instructions) or use the minimal pi setup and use a USB mouse instead of the buttons to select the best response:
 
 	![Pi wiring](assets/min-pi-setup.png)
 
@@ -167,26 +161,27 @@ If UI scaling is wrong then first try to correct it from the TV settings. If tha
 You can add more bad words to mask in the prompt by appending to the `lib/server/profanity.txt` file. Please note the requirements and limits listed [here](https://docs.aws.amazon.com/transcribe/latest/dg/vocabulary-filter-create.html) when adding words to the list.
 
 # BOM
-- Raspberry Pi 4B 4GB (£55) - https://thepihut.com/products/raspberry-pi-4-model-b
+- Raspberry Pi 4B 4GB or 8GB (£55) - https://thepihut.com/products/raspberry-pi-4-model-b
 - PSU (£9) - https://thepihut.com/products/raspberry-pi-psu-uk 
 - Standard SD Card OR SSD hard drive and SATA cable (~£20) - https://www.amazon.co.uk/gp/product/B01N6JQS8C/ and https://thepihut.com/products/ssd-to-usb-3-0-cable-for-raspberry-pi
-- Heat sink case (£8) - https://shop.pimoroni.com/products/aluminium-heatsink-case-for-raspberry-pi-4?variant=29430673178707
+- Heat sink case (£8) - https://www.amazon.co.uk/gp/product/B07WQT1RRZ
 - USB Mic (£20) - https://www.amazon.co.uk/gp/product/B08GYMT6BT
-- USB A plug (£17) - https://www.amazon.co.uk/gp/product/B0C81FMD8M/ref=ppx_yo_dt_b_asin_title_o08_s00?ie=UTF8&psc=1
-- USB C right angle connector (£3) - https://www.amazon.co.uk/gp/product/B0B8X6H96S/ref=ppx_yo_dt_b_asin_title_o09_s00?ie=UTF8&psc=1
-- HDMI right angle connector (£10) - https://www.amazon.co.uk/gp/product/B0BBYV12N3/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1
-- USB C & HDMI plug - https://www.amazon.co.uk/gp/product/B0BYJ2WTY5/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1
-- RJ45 plug (£16) - https://www.amazon.co.uk/gp/product/B0BRFP889X/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1
-- Fan filter covers (£7) - https://www.amazon.co.uk/gp/product/B0BWNDXFGY/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1
-- 60mm PWM fans x2 (£30) - https://www.amazon.co.uk/gp/product/B00VXTANZ4/ref=ppx_yo_dt_b_asin_title_o02_s00?ie=UTF8&psc=1 
-- 25cm ethernet patch (£5) - https://www.amazon.co.uk/gp/product/B08572JJ26/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1
-- Wine gift box (£15) - https://www.amazon.co.uk/gp/product/B07CY12Q5R/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&th=1
-- Massive red button (£9) - https://thepihut.com/products/massive-arcade-button-with-led-100mm-red
-- Massive blue button (£9) - https://thepihut.com/products/massive-arcade-button-with-led-100mm-blue
+- USB A plug (£17) - https://www.amazon.co.uk/gp/product/B0C81FMD8M
+- USB 3.0 A Male to A Female Extension Cable (£3) - https://www.amazon.co.uk/gp/product/B07B8P4RXK
+- USB C right angle connector (£3) - https://www.amazon.co.uk/gp/product/B0B8X6H96S
+- HDMI right angle connector (£10) - https://www.amazon.co.uk/gp/product/B0BBYV12N3
+- USB C & HDMI plug - https://www.amazon.co.uk/gp/product/B0BYJ2WTY5
+- RJ45 plug (£16) - https://www.amazon.co.uk/gp/product/B0BRFP889X
+- Fan filter covers (£7) - https://www.amazon.co.uk/gp/product/B0BWNDXFGY
+- 60mm PWM fans x2 (£30) - https://www.amazon.co.uk/gp/product/B00VXTANZ4
+- 25cm ethernet patch (£5) - https://www.amazon.co.uk/gp/product/B08572JJ26
+- Wine gift box (£15) - https://www.amazon.co.uk/gp/product/B07CY12Q5R
+- Massive red button (£9) - https://www.amazon.co.uk/gp/product/B0C996BX18
+- Massive blue button (£9) - https://www.amazon.co.uk/gp/product/B0C99B23PX
 - Button wires (£2) - https://thepihut.com/products/arcade-button-and-switch-quick-connect-wires-0-25-10-pack
-- JST-XH Extension Cable (£2) - https://thepihut.com/products/jst-xh-extension-cable-2-5mm-pitch-500mm-long
-- 4x M3x15 bolts and nuts to connect the fans to the box
-- Velcro strip to hold the pi to the floor of the box
+- JST-XH Extension Cable (£1) - https://www.amazon.co.uk/gp/product/B0BYP3JTXS
+- 4x M3x15 bolts and nuts to connect the fans to the box - https://www.amazon.co.uk/DTGN-210Pcs-Assortment-Stainless-Printing/dp/B0CCY436J8/
+- Velcro strip to hold the pi to the floor of the box - https://www.amazon.co.uk/Heavy-Strips-Adhesive-Sticky-Fastener/dp/B08BK6RXF4
 
 Total ~ £250
 
@@ -201,6 +196,10 @@ Work in progress
 - Flash SSD or SD card with Raspberry Pi OS (64 Bit) using Raspberry Pi Imager
 	- Click settings to set hostname, key authentication etc: https://www.raspberrypi.com/software/
 
+- Drill holes
+![Holes](./assets/holes.png)
+
+- Assemble buttons, fans, plugs and wires.
 ![Inside](./assets/inside-box.jpg)
 
 ## Raspberry pi pin-out
@@ -229,7 +228,7 @@ Optionally, you can also connect the LED connectors on the buttons to the two sp
 
 <img src="assets/GPIO.png" alt="Pi GPIO" width="300"/>
 
-## De-registering external instances
+# De-registering external instances
 This is useful if you need to re-register the raspberry pi to a different ECS cluster
 
 https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-anywhere-deregistration.html

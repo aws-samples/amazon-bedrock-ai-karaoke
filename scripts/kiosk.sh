@@ -12,7 +12,9 @@ sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' /home/pi/.config/chromium
 
 /usr/bin/chromium-browser --enable-features=WebContentsForceDark --noerrdialogs --disable-infobars --kiosk http://localhost &
 
+
+# Temporary fix for chromium issue
 while true; do
-   xdotool keydown ctrl+Tab; xdotool keyup ctrl+Tab;
-   sleep 10
+   xdotool key F5;
+   sleep 60
 done

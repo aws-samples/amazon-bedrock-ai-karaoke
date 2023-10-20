@@ -1,7 +1,7 @@
 [
     {
         "model": "sdxl",
-        "prompt": "Portrait of a _ with a detailed _ background."
+        "prompt": "Portrait of a _ with a _ in the background."
     },
     {
         "model": "claude",
@@ -9,7 +9,7 @@
     },
     {
         "model": "sdxl",
-        "prompt": "Impressionist landscape of a _ in _, with a _ over a _."
+        "prompt": "Impressionist landscape of a _ in _."
     },
     {
         "model": "claude",
@@ -17,7 +17,7 @@
     },
     {
         "model": "sdxl",
-        "prompt": "Advertisement for a _ with _, _, _ and _ in the center of the frame in bright light, background smoke flame fire darker, lens 50 mm f2.8"
+        "prompt": "Advertisement for a _ with _ in the center of the frame in bright light, background smoke flame fire darker, lens 50 mm f2.8"
     },
     {
         "model": "claude",
