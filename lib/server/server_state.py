@@ -70,29 +70,31 @@ class ServerState:
     
     def red_button_callback(self, channel):
         """Logic for handling a red button press."""
-        self.my_human_preference = 'a'
-        self.my_last_interaction_time = datetime.datetime.now().timestamp()
-        print("Red button pressed!") 
-        self.button_pressed = True
-        if self.my_model == "claude":
-            self.my_state = State.SELECT_A_TXT
-        elif self.my_model == "sdxl":
-            self.my_state = State.SELECT_A_IMG
-        else:
-            raise ValueError(f"Unknown model specified: {self.my_model}")
+        if self.my_state == State.REVIEW_TXT or self.my_state == State.REVIEW_IMG: # Ignore all button presses outside of review state
+            self.my_human_preference = 'a'
+            self.my_last_interaction_time = datetime.datetime.now().timestamp()
+            print("Red button pressed!") 
+            self.button_pressed = True
+            if self.my_model == "claude":
+                self.my_state = State.SELECT_A_TXT
+            elif self.my_model == "sdxl":
+                self.my_state = State.SELECT_A_IMG
+            else:
+                raise ValueError(f"Unknown model specified: {self.my_model}")
         
     def blue_button_callback(self, channel):
         """Logic for handling a blue button press."""
-        self.my_human_preference = 'b'
-        self.my_last_interaction_time = datetime.datetime.now().timestamp()
-        print("Blue button pressed!")
-        self.button_pressed = True
-        if self.my_model == "claude":
-            self.my_state = State.SELECT_B_TXT
-        elif self.my_model == "sdxl":
-            self.my_state = State.SELECT_B_IMG
-        else:
-            raise ValueError(f"Unknown model specified: {self.my_model}")
+        if self.my_state == State.REVIEW_TXT or self.my_state == State.REVIEW_IMG: # Ignore all button presses outside of review state
+            self.my_human_preference = 'b'
+            self.my_last_interaction_time = datetime.datetime.now().timestamp()
+            print("Blue button pressed!")
+            self.button_pressed = True
+            if self.my_model == "claude":
+                self.my_state = State.SELECT_B_TXT
+            elif self.my_model == "sdxl":
+                self.my_state = State.SELECT_B_IMG
+            else:
+                raise ValueError(f"Unknown model specified: {self.my_model}")
             
     def call_claude2(self):
         # Construct the body dictionary
