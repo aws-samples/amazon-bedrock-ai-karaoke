@@ -201,24 +201,6 @@ async def poll_handler(server_state):
                     
             if server_state.my_state == State.REVIEW_TXT or server_state.my_state == State.REVIEW_IMG:
                 try:
-                    # Initialize GPIO
-                    if GPIO is not None:
-                        GPIO.setmode(GPIO.BCM)  # Use BCM numbering scheme
-                        GPIO.setwarnings(False) # Disable warnings
-
-                        # Pin configuration
-                        red_button_pin = 16
-                        blue_button_pin = 17
-
-                        # Set up the button pins as input pins with pull-up resistors
-                        GPIO.setup(red_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-                        GPIO.setup(blue_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-                        # Register the button press events
-                        GPIO.add_event_detect(red_button_pin, GPIO.FALLING, callback=server_state.red_button_callback, bouncetime=600)
-                        GPIO.add_event_detect(blue_button_pin, GPIO.FALLING, callback=server_state.blue_button_callback, bouncetime=600)
-                    else:
-                        print("GPIO is not available. Skipping setup.")
                     print("Waiting for button press.")
                     while True:
                         if server_state.button_pressed:
@@ -229,14 +211,10 @@ async def poll_handler(server_state):
                             server_state.my_task = asyncio.create_task(basic_transcribe(server_state))
                             break
                         else: 
-                            await asyncio.sleep(1)
+                            await asyncio.sleep(0.2)
 
                 except KeyboardInterrupt:
                     print("Exiting program.")
-
-                finally:
-                    if GPIO is not None:
-                        GPIO.cleanup()  # Clean up GPIO settings
 
             await asyncio.sleep(POLL_DELAY)
         
@@ -252,12 +230,39 @@ async def main():
     server_state = ServerState()
     # Create a partial function for producer_handler with server_state
     handler_with_state = partial(handler, server_state=server_state)
-    
+
+    try:
+        # Initialize GPIO
+        if GPIO is not None:
+            in_review = True
+            GPIO.setmode(GPIO.BCM)  # Use BCM numbering scheme
+            GPIO.setwarnings(False) # Disable warnings
+
+            # Pin configuration
+            red_button_pin = 16
+            blue_button_pin = 17
+
+            # Set up the button pins as input pins with pull-up resistors
+            GPIO.setup(red_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            GPIO.setup(blue_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+            # Register the button press events
+            GPIO.add_event_detect(red_button_pin, GPIO.FALLING, callback=server_state.red_button_callback, bouncetime=600)
+            GPIO.add_event_detect(blue_button_pin, GPIO.FALLING, callback=server_state.blue_button_callback, bouncetime=600)
+        else:
+            print("GPIO is not available. Skipping setup.")
+        
+    except Exception as error:
+        print(error)
+        
     # Schedule these calls *concurrently*:
-    tasks = await asyncio.gather(
+    await asyncio.gather(
         poll_handler(server_state),
         serve(handler_with_state, WEBSOCKET_IP, WEBSOCKET_PORT)
     )
+
+    if GPIO is not None:
+        GPIO.cleanup()  # Clean up GPIO settings
 
 if __name__ == "__main__":
     asyncio.run(main())
