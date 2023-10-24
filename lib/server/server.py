@@ -163,7 +163,6 @@ async def producer_handler(websocket, server_state):
     while True:        
         try:
             data = {
-                "event_time": str(datetime.datetime.now()),
                 "prompt": server_state.my_prompt,
                 "model": server_state.my_model,
                 "result_a": server_state.my_result_a,
@@ -174,12 +173,13 @@ async def producer_handler(websocket, server_state):
             # Only send the message if the data has changed
             if data != previous_data:
                 await websocket.send(json.dumps(data))
+                previous_data = data
 
         except exceptions.ConnectionClosed \
                 or exceptions.ConnectionClosedOK \
                 or exceptions.ConnectionClosedError \
                 or KeyboardInterrupt as e:
-            print(e)
+            pass
         await asyncio.sleep(POLL_DELAY)
 
 async def handler(websocket, server_state):
@@ -196,23 +196,26 @@ async def poll_handler(server_state):
         try:
             time_now = datetime.datetime.now().timestamp()
 
+            if server_state.my_state == State.TRANSCRIBING and \
+                (server_state.my_task is None or server_state.my_task.done()):
+                # Start or restart the task
+                server_state.my_task = asyncio.create_task(basic_transcribe(server_state))
+            elif not server_state.my_state == State.TRANSCRIBING and \
+                server_state.my_task is not None and not server_state.my_task.done():
+                # Cancel the task if the state variable is False
+                server_state.my_task.cancel()
+
             if server_state.my_state == State.ERROR and (time_now - server_state.my_error_time) > 20:
                 print("Starting again after 30 seconds after an error.")
                 server_state.get_next_prompt()
-                if server_state.my_task:
-                    server_state.my_task.cancel()
-                    server_state.my_task = asyncio.create_task(basic_transcribe(server_state))
+                server_state.my_state == State.TRANSCRIBING
                     
             if server_state.my_state == State.REVIEW_TXT or server_state.my_state == State.REVIEW_IMG:
                 try:
                     print("Waiting for button press.")
                     while True:
                         if server_state.button_pressed:
-                            await asyncio.sleep(1)
                             server_state.save_results()
-                            if server_state.my_task:
-                                server_state.my_task.cancel()
-                            server_state.my_task = asyncio.create_task(basic_transcribe(server_state))
                             break
                         else: 
                             await asyncio.sleep(0.2)
@@ -262,7 +265,7 @@ async def main():
     # Schedule these calls *concurrently*:
     await asyncio.gather(
         poll_handler(server_state),
-        serve(handler_with_state, WEBSOCKET_IP, WEBSOCKET_PORT)
+        serve(handler_with_state, WEBSOCKET_IP, WEBSOCKET_PORT, ping_timeout=None)
     )
 
     if GPIO is not None:
