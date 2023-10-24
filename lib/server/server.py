@@ -214,11 +214,10 @@ async def poll_handler(server_state):
                 try:
                     print("Waiting for button press.")
                     while True:
+                        await asyncio.sleep(1)
                         if server_state.button_pressed:
                             server_state.save_results()
                             break
-                        else: 
-                            await asyncio.sleep(0.2)
 
                 except KeyboardInterrupt:
                     print("Exiting program.")
