@@ -32,7 +32,7 @@ except ImportError:
 
 WEBSOCKET_PORT = 8765           # Standard websocket port
 WEBSOCKET_IP = '127.0.0.1'      # Interface for websocket server to listen on
-POLL_DELAY = 0.5                # How long to pause between sending websocket data.
+POLL_DELAY = 0.1                # How long to pause between sending websocket data.
 MIC_SAMPLE_RATE_HZ = 48000      # This may change depending on your microphone
 
 aws_region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
@@ -158,6 +158,8 @@ async def consumer_handler(websocket, server_state):
             print(f'Unknown message {message}')
 
 async def producer_handler(websocket, server_state):
+    previous_data = None
+
     while True:        
         try:
             data = {
@@ -169,14 +171,16 @@ async def producer_handler(websocket, server_state):
                 "state": str(server_state.my_state),
                 "error": server_state.my_error
             }
-            await websocket.send(json.dumps(data))
+            # Only send the message if the data has changed
+            if data != previous_data:
+                await websocket.send(json.dumps(data))
 
         except exceptions.ConnectionClosed \
                 or exceptions.ConnectionClosedOK \
                 or exceptions.ConnectionClosedError \
                 or KeyboardInterrupt as e:
-            pass
-        await asyncio.sleep(0.1)
+            print(e)
+        await asyncio.sleep(POLL_DELAY)
 
 async def handler(websocket, server_state):
     await asyncio.gather(
@@ -216,7 +220,7 @@ async def poll_handler(server_state):
                 except KeyboardInterrupt:
                     print("Exiting program.")
 
-            await asyncio.sleep(POLL_DELAY)
+            await asyncio.sleep(0.2)
         
         except Exception as error:
             print(error)
