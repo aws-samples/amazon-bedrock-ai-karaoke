@@ -2,6 +2,7 @@
 
 import asyncio
 from functools import partial
+import concurrent
 
 import json
 import datetime
@@ -40,11 +41,20 @@ language_code = os.getenv("LANGUAGE_CODE", "en-US")
 vocab_filter_name = os.getenv("VOCAB_FILTER_NAME", "BadWords-AiKaraokeStack")
 vocab_filter_method = os.getenv("VOCAB_FILTER_METHOD", "mask")
 
+async def cancel_transcription(server_state):
+    # Cancel the task if the state is not TRANSCRIBING and the task is still running
+    if server_state.my_task:
+        try:
+            server_state.my_task.cancel()
+        except asyncio.CancelledError or concurrent.futures._base.InvalidStateError:
+            pass  # Task cancellation is expected
+
 class MyEventHandler(TranscriptResultStreamHandler):
 
     def __init__(self, stream, server_state):
         super().__init__(stream)
         self.server_state = server_state
+        self.cancelling = False
 
     async def modify_string(self, s):
         """Remove the capitals and full stop from the punctuated output from Amazon Transcribe"""
@@ -83,6 +93,7 @@ class MyEventHandler(TranscriptResultStreamHandler):
                     break
                 else:
                     await asyncio.to_thread(self.server_state.handle_generation)
+                    await cancel_transcription(self.server_state)
                     break
     
 async def mic_stream(server_state):
@@ -188,28 +199,29 @@ async def handler(websocket, server_state):
         producer_handler(websocket, server_state),
     )
 
+async def manage_transcription(server_state):
+    """Handle the state of the transcription task"""
+    while True:
+        time_now = datetime.datetime.now()
+
+        if server_state.my_state == State.TRANSCRIBING:
+            # Check if the task is not running
+            if (server_state.my_task is None or server_state.my_task.done()):
+                await cancel_transcription(server_state)
+                server_state.my_task = asyncio.create_task(basic_transcribe(server_state))
+
+        elif server_state.my_state == State.ERROR and (time_now.timestamp() - server_state.my_error_time) < 10:
+            await asyncio.sleep(5)
+            server_state.get_next_prompt()
+            server_state.my_state == State.TRANSCRIBING
+
+        # Pause briefly to yield control and prevent a tight loop
+        await asyncio.sleep(1)
+
 async def poll_handler(server_state):
     """Handle the GPIO button presses and restarting transcription after errors"""
-    server_state.my_task = asyncio.create_task(basic_transcribe(server_state))
-
     while True:
         try:
-            time_now = datetime.datetime.now().timestamp()
-
-            if server_state.my_state == State.TRANSCRIBING and \
-                (server_state.my_task is None or server_state.my_task.done()):
-                # Start or restart the task
-                server_state.my_task = asyncio.create_task(basic_transcribe(server_state))
-            elif not server_state.my_state == State.TRANSCRIBING and \
-                server_state.my_task is not None and not server_state.my_task.done():
-                # Cancel the task if the state variable is False
-                server_state.my_task.cancel()
-
-            if server_state.my_state == State.ERROR and (time_now - server_state.my_error_time) > 20:
-                print("Starting again after 30 seconds after an error.")
-                server_state.get_next_prompt()
-                server_state.my_state == State.TRANSCRIBING
-                    
             if server_state.my_state == State.REVIEW_TXT or server_state.my_state == State.REVIEW_IMG:
                 try:
                     print("Waiting for button press.")
@@ -264,6 +276,7 @@ async def main():
     # Schedule these calls *concurrently*:
     await asyncio.gather(
         poll_handler(server_state),
+        manage_transcription(server_state),
         serve(handler_with_state, WEBSOCKET_IP, WEBSOCKET_PORT, ping_timeout=None)
     )
 

@@ -6,6 +6,9 @@ import uuid
 from random import randint
 import boto3
 import os
+import asyncio
+import concurrent
+from botocore.config import Config
 
 from states import State
 
@@ -30,9 +33,14 @@ class ServerState:
         self.my_last_interaction_time = datetime.datetime.now().timestamp()
         self.my_uuid = uuid.uuid4()
 
+        config = Config(
+            connect_timeout=1, read_timeout=30,
+            retries={'max_attempts': 1})
+
         self.bedrock_runtime = boto3.client(
             service_name="bedrock-runtime",
-            region_name=aws_region
+            region_name=aws_region,
+            config=config
         )
 
         self.load_prompts("prompts.json")
@@ -179,7 +187,8 @@ class ServerState:
         self.my_result_b = image        
         
     def handle_generation(self):
-        """General method to make a prediction based on the model type."""        
+        """General method to make a prediction based on the model type."""
+        
         if self.my_model == "claude":
             self.my_state = State.INFERENCE_TXT_A
             self.call_claude2()
@@ -191,8 +200,6 @@ class ServerState:
         else:
             raise ValueError(f"Unknown model specified: {self.my_model}")
         
-        self.my_task.cancel()
-
     def save_results(self):
         """Write to disk so human preferences can be uploaded to S3 later."""
         if self.my_human_preference:
