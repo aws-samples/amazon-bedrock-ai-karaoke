@@ -112,13 +112,18 @@ async def mic_stream(server_state):
     # Be sure to use the correct parameters for the audio stream that matches
     # the audio formats described for the source language you'll be using:
     # https://docs.aws.amazon.com/transcribe/latest/dg/streaming.html
-    sd_stream = sounddevice.RawInputStream(
-        channels=1,
-        samplerate=MIC_SAMPLE_RATE_HZ,
-        callback=callback,
-        blocksize=1024 * 2,
-        dtype="int16"
-    )
+    try:
+        sd_stream = sounddevice.RawInputStream(
+            channels=1,
+            samplerate=MIC_SAMPLE_RATE_HZ,
+            callback=callback,
+            blocksize=1024 * 2,
+            dtype="int16"
+        )
+    except Exception as e:
+        print(f"Error opening sounddevice - exiting now. {e}")
+        exit(-1)
+
     print(f"Transcribing with sample rate {sd_stream.samplerate} device {sd_stream.device}")
     # Initiate the audio stream and asynchronously yield the audio chunks as they become available.
     with sd_stream:
