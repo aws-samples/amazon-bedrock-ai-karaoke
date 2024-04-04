@@ -21,13 +21,18 @@ class ServerState:
         self.my_state = State.INITIALIZING
         self.prompts = []
         self.current_prompt_index = 0
+        self.my_instruction = None
         self.my_prompt = None
         self.my_model = None
+        self.my_image_result_a = ""
+        self.my_image_result_b = ""
+        self.selected_image = ""
         self.my_result_a = ""
         self.my_result_b = ""
         self.my_human_preference = None
         self.button_pressed = False
         self.my_task = None
+        self.my_transcribe_stream = None
         self.my_error = None
         self.my_error_time = datetime.datetime.now().timestamp()
         self.my_last_interaction_time = datetime.datetime.now().timestamp()
@@ -65,12 +70,18 @@ class ServerState:
         self.button_pressed = False
         self.my_state = State.TRANSCRIBING
         self.my_uuid = uuid.uuid4()
+        self.my_instruction = ""
         if self.prompts:
             if self.current_prompt_index >= len(self.prompts):
                 self.current_prompt_index = 0  # Loop back to the start
             self.my_prompt = self.prompts[self.current_prompt_index]["prompt"]
             self.my_model = self.prompts[self.current_prompt_index]["model"]
+            self.my_instruction = self.prompts[self.current_prompt_index]["instruction"]
             self.current_prompt_index += 1  # Increment the index for the next call
+            if self.my_model == "sdxl": # If we're back to the image generation, reset the image too
+                self.my_image_result_a = ""
+                self.my_image_result_b = ""
+                self.selected_image = ""
 
         else:
             print("No prompts are loaded.")
@@ -86,6 +97,7 @@ class ServerState:
             if self.my_model == "claude":
                 self.my_state = State.SELECT_A_TXT
             elif self.my_model == "sdxl":
+                self.selected_image = self.my_image_result_a
                 self.my_state = State.SELECT_A_IMG
             else:
                 raise ValueError(f"Unknown model specified: {self.my_model}")
@@ -100,19 +112,32 @@ class ServerState:
             if self.my_model == "claude":
                 self.my_state = State.SELECT_B_TXT
             elif self.my_model == "sdxl":
+                self.selected_image = self.my_image_result_b
                 self.my_state = State.SELECT_B_IMG
             else:
                 raise ValueError(f"Unknown model specified: {self.my_model}")
             
-    def call_claude2(self):
+    def call_claude3(self):
         # Construct the body dictionary
         body_dict = {
-            "prompt": self.my_prompt,
-            "max_tokens_to_sample": 150,
+            "messages": [
+                {"role": "user", 
+                 "content": [
+                    {   "type": "text",
+                        "text": self.my_prompt 
+                    },
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/png",
+                            "data": self.selected_image
+                        }
+                    }
+                 ]
+                 }],
+            "max_tokens": 200,
             "temperature": 1,
-            "top_k": 250,
-            "top_p": 0.999,
-            "stop_sequences": ["\n\nHuman:"],
             "anthropic_version": "bedrock-2023-05-31"
         }
 
@@ -121,7 +146,7 @@ class ServerState:
 
         # Construct the kwargs dictionary
         kwargs = {
-            "modelId": "anthropic.claude-v2",
+            "modelId": "anthropic.claude-3-haiku-20240307-v1:0",
             "contentType": "application/json",
             "accept": "*/*",
             "body": body_str
@@ -134,21 +159,27 @@ class ServerState:
             for event in stream:
                 chunk = event.get('chunk')
                 if chunk:
-                    completion = json.loads(chunk.get('bytes')).get('completion')
-                    self.my_result_a += completion
+                    delta = json.loads(chunk.get('bytes').decode()).get("delta")
+                    if delta:
+                        text = delta.get("text")
+                        if text:
+                            self.my_result_a += text
 
         print(f"Completion A: {self.my_result_a}")
         self.my_state = State.INFERENCE_TXT_B
 
         # Invoke the model
         response = self.bedrock_runtime.invoke_model_with_response_stream(**kwargs)
-        stream = response.get('body')
+        stream = response['body']
         if stream:
             for event in stream:
                 chunk = event.get('chunk')
                 if chunk:
-                    completion = json.loads(chunk.get('bytes')).get('completion')
-                    self.my_result_b += completion
+                    delta = json.loads(chunk.get('bytes').decode()).get("delta")
+                    if delta:
+                        text = delta.get("text")
+                        if text:
+                            self.my_result_b += text
 
         print(f"Completion B: {self.my_result_b}")
 
@@ -181,17 +212,17 @@ class ServerState:
 
     def handle_image_gen(self):
         image = self.invoke_sdxl()
-        self.my_result_a = image
+        self.my_image_result_a = image
         self.my_state = State.INFERENCE_IMG_B
         image = self.invoke_sdxl()
-        self.my_result_b = image        
+        self.my_image_result_b = image        
         
     def handle_generation(self):
         """General method to make a prediction based on the model type."""
         
         if self.my_model == "claude":
             self.my_state = State.INFERENCE_TXT_A
-            self.call_claude2()
+            self.call_claude3()
             self.my_state = State.REVIEW_TXT
         elif self.my_model == "sdxl":
             self.my_state = State.INFERENCE_IMG_A
@@ -205,9 +236,11 @@ class ServerState:
         if self.my_human_preference:
             data = {
                 'timestamp': str(datetime.datetime.now()),
-                'instruction': self.my_prompt,
                 'model': self.my_model,
                 'prompt': self.my_prompt,
+                'image_result_a': self.my_image_result_a,
+                'image_result_b': self.my_image_result_b,
+                'human_preference_image': self.selected_image,
                 'result_a': self.my_result_a,
                 'result_b': self.my_result_b,
                 'human_preference': self.my_human_preference,

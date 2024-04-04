@@ -42,6 +42,13 @@ vocab_filter_name = os.getenv("VOCAB_FILTER_NAME", "BadWords-AiKaraokeStack")
 vocab_filter_method = os.getenv("VOCAB_FILTER_METHOD", "mask")
 
 async def cancel_transcription(server_state):
+    if server_state.my_transcribe_stream:
+        try:
+            await server_state.my_transcribe_stream.input_stream.end_stream()
+            print("Transcription stream ended")
+        except Exception as e:
+            # print(f"An error occurred while ending transcription stream: {e}")
+            pass
     # Cancel the task if the state is not TRANSCRIBING and the task is still running
     if server_state.my_task:
         try:
@@ -79,22 +86,19 @@ class MyEventHandler(TranscriptResultStreamHandler):
         return full_stop_removed
 
     async def handle_transcript_event(self, transcript_event: TranscriptEvent):
-        """Handle transcript events asyncronously."""
+        """Handle transcript events asynchronously."""
         results = transcript_event.transcript.results
         
         for result in results:
-            if not result.is_partial:
-                if '_' in self.server_state.my_prompt:
-                    snippet = await self.modify_string(result.alternatives[0].transcript)
-                    self.server_state.my_prompt = self.server_state.my_prompt.replace('_', snippet, 1)
-                    print("Prompt:", self.server_state.my_prompt)
+            for alt in result.alternatives:
+                self.server_state.my_prompt = alt.transcript
 
-                if '_' in self.server_state.my_prompt:
-                    break
-                else:
-                    await asyncio.to_thread(self.server_state.handle_generation)
-                    await cancel_transcription(self.server_state)
-                    break
+                # print("Prompt:", self.server_state.my_prompt)
+            if not result.is_partial:
+                print("Prompt:", self.server_state.my_prompt)
+                await asyncio.to_thread(self.server_state.handle_generation)
+                await cancel_transcription(self.server_state)
+                break
     
 async def mic_stream(server_state):
     """This function wraps the raw input stream from the microphone 
@@ -145,7 +149,7 @@ async def basic_transcribe(server_state):
     client = TranscribeStreamingClient(region=aws_region)
 
     # Start transcription to generate our async stream
-    transcribe_stream = await client.start_stream_transcription(
+    server_state.my_transcribe_stream = await client.start_stream_transcription(
         language_code=language_code,
         media_sample_rate_hz=MIC_SAMPLE_RATE_HZ,
         media_encoding="pcm",
@@ -154,11 +158,11 @@ async def basic_transcribe(server_state):
     )
 
     # Instantiate our handler and start processing events
-    handler = MyEventHandler(transcribe_stream.output_stream, server_state)
+    handler = MyEventHandler(server_state.my_transcribe_stream.output_stream, server_state)
     try:
-        await asyncio.gather(write_chunks(transcribe_stream, server_state),handler.handle_events())
+        await asyncio.gather(write_chunks(server_state.my_transcribe_stream, server_state),handler.handle_events())
     except Exception as error:
-        await transcribe_stream.input_stream.end_stream()
+        await server_state.my_transcribe_stream.input_stream.end_stream()
         server_state.my_state = State.ERROR
         server_state.my_error = str(error)
         server_state.my_error_time = datetime.datetime.now().timestamp()
@@ -179,10 +183,14 @@ async def producer_handler(websocket, server_state):
     while True:        
         try:
             data = {
+                "instruction": server_state.my_instruction,
                 "prompt": server_state.my_prompt,
                 "model": server_state.my_model,
                 "result_a": server_state.my_result_a,
                 "result_b": server_state.my_result_b,
+                "image_result_a": server_state.my_image_result_a,
+                "image_result_b": server_state.my_image_result_b,
+                "selected_image": server_state.selected_image,
                 "state": str(server_state.my_state),
                 "error": server_state.my_error
             }
