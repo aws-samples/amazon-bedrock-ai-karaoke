@@ -19,7 +19,7 @@ from states import State
 from server_state import ServerState
 
 try:
-    import RPi.GPIO as GPIO
+    from RPi import GPIO
 except ImportError:
     print("RPi.GPIO module is not available. Using mouse click instead.")
     # You can use a mock or a dummy module as a fallback

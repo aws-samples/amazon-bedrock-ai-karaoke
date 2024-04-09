@@ -2,5 +2,6 @@ websockets
 pyaudio
 sounddevice
 amazon_transcribe
-boto3==1.28.57
-RPi.GPIO
+boto3
+lgpio
+rpi-lgpio

@@ -118,12 +118,28 @@ export class AiKaraokeStack extends cdk.Stack {
       hostPath: '/dev/gpio',
       permissions: [ecs.DevicePermission.READ, ecs.DevicePermission.WRITE, ecs.DevicePermission.MKNOD]
     });
+    myLinuxParams.addDevices({
+      hostPath: '/dev/gpiochip0',
+      permissions: [ecs.DevicePermission.READ, ecs.DevicePermission.WRITE, ecs.DevicePermission.MKNOD]
+    });
+    myLinuxParams.addDevices({
+      hostPath: '/dev/gpiomem0',
+      permissions: [ecs.DevicePermission.READ, ecs.DevicePermission.WRITE, ecs.DevicePermission.MKNOD]
+    });
+    myLinuxParams.addDevices({
+      hostPath: '/dev/gpiochip4',
+      permissions: [ecs.DevicePermission.READ, ecs.DevicePermission.WRITE, ecs.DevicePermission.MKNOD]
+    });
+    myLinuxParams.addDevices({
+      hostPath: '/dev/gpiomem4',
+      permissions: [ecs.DevicePermission.READ, ecs.DevicePermission.WRITE, ecs.DevicePermission.MKNOD]
+    });
 
     myLinuxParams.addCapabilities(ecs.Capability.ALL);
 
     const server = taskDefinition.addContainer('Server', {
       image: ecs.ContainerImage.fromAsset(path.resolve(__dirname,'./server')),
-      memoryReservationMiB: 512,
+      memoryReservationMiB: 1024,
       logging: new ecs.AwsLogDriver({ streamPrefix: 'server', mode: ecs.AwsLogDriverMode.NON_BLOCKING }),
       environment: {
         LANGUAGE_CODE: language_code,
@@ -141,7 +157,7 @@ export class AiKaraokeStack extends cdk.Stack {
 
     const client = taskDefinition.addContainer('Client', {
       image: ecs.ContainerImage.fromAsset(path.resolve(__dirname, './client')),
-      memoryReservationMiB: 512,
+      memoryReservationMiB: 1024,
       logging: new ecs.AwsLogDriver({ streamPrefix: 'client', mode: ecs.AwsLogDriverMode.NON_BLOCKING }),
       environment: {
         AWS_DEFAULT_REGION: this.region,
