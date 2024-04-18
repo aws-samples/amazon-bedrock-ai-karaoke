@@ -34,11 +34,11 @@ Secondly, this introduces customers to several key ideas in generative AI system
 
 # User Instructions
 1) 💭 First, think of a thing or a place in your minds eye you can describe in detail. For example, "A cute ginger cat wearing a suit and tie"
-1) 🎤 Pickup the microphone and un-mute and describe that image! Speak clearly and close to the mic.
+2) 🎤 Pickup the microphone and un-mute and describe that image! Speak clearly and close to the mic.
 3) 🔴 🔵 Review the two images, and push the color button corresponding to the best image.
 4) 🎑 🎤 Now ask a question about the selected best image. For example: "What's the color of the cat's tie?"
-3) 🔴 🔵 Review the two responses, and push the color button corresponding to the best answer.
-5) 🔁 Repeat!
+5) 🔴 🔵 Review the two responses, and push the color button corresponding to the best answer.
+6) 🔁 Repeat!
 
 # Architecture
 <img src="assets/ai_karaoke_detailed_arch.png" alt="Architecture" width="600"/>
