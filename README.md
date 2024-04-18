@@ -26,17 +26,19 @@ Firstly, this is meant to be fun! Getting people to interact through a microphon
 
 <img src="assets/full-setup.png" alt="AI Karaoke Setup" width="400"/>
 
-Secondly, this introduces customers to several key ideas in state-of-the-art GenAI system engineering including:
+Secondly, this introduces customers to several key ideas in generative AI system engineering including:
 
-1) The anatomy of a prompt
-2) Intuition for the data flywheel from human feedback
+1) Text to image generation and visual Q/A
+2) Importance of creating a data flywheel from human feedback
 3) Mitigating challenges of hallucination and safety
 
 # User Instructions
-1) 🎤 Pickup the microphone
-2) 🕺 Complete the prompt - Karaoke style!! Speak clearly and close to the mic.
-3) 🔴 🔵 Review the completions and push the color button corresponding to the best answer
-4) 🔁 Repeat! There are a different prompt templates to play with.
+1) 💭 First, think of a thing or a place in your minds eye you can describe in detail. For example, "A cute ginger cat wearing a suit and tie"
+1) 🎤 Pickup the microphone and un-mute and describe that image! Speak clearly and close to the mic.
+3) 🔴 🔵 Review the two images, and push the color button corresponding to the best image.
+4) 🎑 🎤 Now ask a question about the selected best image. For example: "What's the color of the cat's tie?"
+3) 🔴 🔵 Review the two responses, and push the color button corresponding to the best answer.
+5) 🔁 Repeat!
 
 # Architecture
 <img src="assets/ai_karaoke_detailed_arch.png" alt="Architecture" width="600"/>
@@ -161,10 +163,9 @@ If UI scaling is wrong then first try to correct it from the TV settings. If tha
 You can add more bad words to mask in the prompt by appending to the `lib/server/profanity.txt` file. Please note the requirements and limits listed [here](https://docs.aws.amazon.com/transcribe/latest/dg/vocabulary-filter-create.html) when adding words to the list.
 
 # BOM
-- Raspberry Pi 4B 4GB or 8GB (£55) - https://thepihut.com/products/raspberry-pi-4-model-b
-- PSU (£9) - https://thepihut.com/products/raspberry-pi-psu-uk 
-- Standard SD Card OR SSD hard drive and SATA cable (~£20) - https://www.amazon.co.uk/gp/product/B01N6JQS8C/ and https://thepihut.com/products/ssd-to-usb-3-0-cable-for-raspberry-pi
-- Heat sink case (£8) - https://www.amazon.co.uk/gp/product/B07WQT1RRZ
+- Raspberry Pi 5 4GB or 8GB (£55) - https://thepihut.com/products/raspberry-pi-5
+- PSU (£11) - https://thepihut.com/products/raspberry-pi-27w-usb-c-power-supply
+- Standard SD Card - https://thepihut.com/products/noobs-preinstalled-sd-card
 - USB Mic (£20) - https://www.amazon.co.uk/gp/product/B08GYMT6BT
 - USB A plug (£17) - https://www.amazon.co.uk/gp/product/B0C81FMD8M
 - USB 3.0 A Male to A Female Extension Cable (£3) - https://www.amazon.co.uk/gp/product/B07B8P4RXK
