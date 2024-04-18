@@ -48,11 +48,7 @@ def main():
     try:
         print("Starting fan control loop")
         while True:
-            temp = get_temp()
-            for i, threshold in enumerate(TEMP_THRESHOLDS):
-                if temp > threshold:
-                    set_fan_speed(fans, FAN_SPEEDS[i])
-                    break
+            set_fan_speed(fans, 10)
             time.sleep(SLEEP_TIME)
     except KeyboardInterrupt:
         pass

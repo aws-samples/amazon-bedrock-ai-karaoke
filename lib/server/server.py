@@ -247,7 +247,7 @@ async def poll_handler(server_state):
                 except KeyboardInterrupt:
                     print("Exiting program.")
 
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.01)
         
         except Exception as error:
             print(error)
@@ -278,8 +278,8 @@ async def main():
             GPIO.setup(blue_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
             # Register the button press events
-            GPIO.add_event_detect(red_button_pin, GPIO.FALLING, callback=server_state.red_button_callback, bouncetime=600)
-            GPIO.add_event_detect(blue_button_pin, GPIO.FALLING, callback=server_state.blue_button_callback, bouncetime=600)
+            GPIO.add_event_detect(red_button_pin, GPIO.FALLING, callback=server_state.red_button_callback, bouncetime=200)
+            GPIO.add_event_detect(blue_button_pin, GPIO.FALLING, callback=server_state.blue_button_callback, bouncetime=200)
         else:
             print("GPIO is not available. Skipping setup.")
         

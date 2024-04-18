@@ -35,7 +35,6 @@ class ServerState:
         self.my_transcribe_stream = None
         self.my_error = None
         self.my_error_time = datetime.datetime.now().timestamp()
-        self.my_last_interaction_time = datetime.datetime.now().timestamp()
         self.my_uuid = uuid.uuid4()
 
         config = Config(
@@ -91,7 +90,6 @@ class ServerState:
         """Logic for handling a red button press."""
         if self.my_state == State.REVIEW_TXT or self.my_state == State.REVIEW_IMG: # Ignore all button presses outside of review state
             self.my_human_preference = 'a'
-            self.my_last_interaction_time = datetime.datetime.now().timestamp()
             print("Red button pressed!") 
             self.button_pressed = True
             if self.my_model == "claude":
@@ -106,7 +104,6 @@ class ServerState:
         """Logic for handling a blue button press."""
         if self.my_state == State.REVIEW_TXT or self.my_state == State.REVIEW_IMG: # Ignore all button presses outside of review state
             self.my_human_preference = 'b'
-            self.my_last_interaction_time = datetime.datetime.now().timestamp()
             print("Blue button pressed!")
             self.button_pressed = True
             if self.my_model == "claude":
