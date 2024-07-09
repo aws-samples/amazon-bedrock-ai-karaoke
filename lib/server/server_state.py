@@ -194,7 +194,7 @@ class ServerState:
 
         # Construct the outer dictionary
         kwargs = {
-            "modelId": "stability.stable-diffusion-xl-v0",
+            "modelId": "stability.stable-diffusion-xl-v1",
             "contentType": "application/json",
             "accept": "application/json",
             "body": body_str
